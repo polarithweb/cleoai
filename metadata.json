@@ -1,6 +1,6 @@
 {
   "name": "Polarith Cleo",
   "description": "A pristine, pure-white neumorphic coding companion powered by multiple specialized Polarith models. Developed by Priyam Kesh.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

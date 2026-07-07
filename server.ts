@@ -305,8 +305,8 @@ async function startServer() {
       logActivity(`Message processed via ${modelLabel}`);
       saveStats();
       
-      // If NOT Polarith Kodama or Polarith Amabie, route directly to Groq
-      if (modelId !== 'kodama' && modelId !== 'amabie') {
+      // If NOT Polarith Kodama, route directly to Groq (including Polarith Amabie and Polarith Kaze)
+      if (modelId !== 'kodama') {
         const groqApiKey = process.env.GROQ_API_KEY || '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';
         if (!groqApiKey) {
           return res.status(400).json({ 
@@ -482,7 +482,7 @@ async function startServer() {
         return res.json({ reply });
       }
 
-      // Use Gemini API for Polarith Kodama or Polarith Amabie
+      // Use Gemini API for Polarith Kodama
       const apiKey = process.env.GEMINI_API_KEY;
       
       if (!apiKey) {

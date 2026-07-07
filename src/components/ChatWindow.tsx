@@ -25,6 +25,7 @@ export default function ChatWindow({
   const [recordingTime, setRecordingTime] = useState(0);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [micError, setMicError] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -54,6 +55,7 @@ export default function ChatWindow({
   }, [isRecording]);
 
   const handleStartRecording = async () => {
+    setMicError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioChunksRef.current = [];
@@ -116,7 +118,7 @@ export default function ChatWindow({
           };
         } catch (err: any) {
           console.error('Audio transcription error:', err);
-          alert(`Error transcribing audio: ${err.message || err}`);
+          setMicError(`Transcription failed: ${err.message || err}`);
         } finally {
           setIsTranscribing(false);
         }
@@ -125,8 +127,20 @@ export default function ChatWindow({
       mediaRecorder.start();
       setIsRecording(true);
     } catch (err: any) {
-      console.error('Mic permission denied or error:', err);
-      alert('Could not access microphone. Please check permissions.');
+      console.warn('Mic permission denied or warning:', err);
+      const errMsg = (err?.message || String(err) || '').toLowerCase();
+      const errName = (err?.name || '').toLowerCase();
+      const isPermissionDenied = 
+        errName === 'notallowederror' || 
+        errName === 'permissiondeniederror' || 
+        errMsg.includes('denied') || 
+        errMsg.includes('permission');
+      
+      if (isPermissionDenied) {
+        setMicError('Microphone permission denied. To record, please enable microphone access. If inside the preview iframe, open the app in a new tab using the icon at the top right.');
+      } else {
+        setMicError(`Could not access microphone: ${err?.message || err}`);
+      }
     }
   };
 
@@ -265,6 +279,22 @@ export default function ChatWindow({
             <div className="flex items-center gap-2 p-2.5 px-3 rounded-xl bg-blue-50/80 text-blue-600 text-xs font-semibold mb-1 border border-blue-100">
               <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
               <span>Whisper is transcribing your audio...</span>
+            </div>
+          )}
+
+          {micError && (
+            <div className="flex items-center justify-between gap-2 p-2.5 px-3 rounded-xl bg-amber-50/95 text-amber-800 text-xs font-semibold mb-1 border border-amber-200" id="mic-error-warning">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>{micError}</span>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setMicError(null)}
+                className="text-amber-500 hover:text-amber-700 font-mono font-bold text-xs px-1 cursor-pointer"
+              >
+                ✕
+              </button>
             </div>
           )}
 
