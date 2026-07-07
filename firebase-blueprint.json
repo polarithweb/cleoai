@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "Metrics": {
+      "title": "Metrics",
+      "description": "Aggregated statistics for model usage and unique clients",
+      "type": "object",
+      "properties": {
+        "totalMessages": {
+          "type": "integer",
+          "description": "Total messages handled across all models"
+        },
+        "uniqueUsers": {
+          "type": "array",
+          "description": "List of unique client IDs"
+        },
+        "messagesByModel": {
+          "type": "object",
+          "description": "Message counts broken down by model ID"
+        }
+      },
+      "required": ["totalMessages", "uniqueUsers", "messagesByModel"]
+    },
+    "ActivityLog": {
+      "title": "ActivityLog",
+      "description": "Chronological system event logs",
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The exact date and time the event occurred"
+        },
+        "event": {
+          "type": "string",
+          "description": "Human-readable description of the event"
+        }
+      },
+      "required": ["timestamp", "event"]
+    }
+  },
+  "firestore": {
+    "system_stats/metrics": {
+      "schema": "Metrics",
+      "description": "Single metrics tracking document"
+    },
+    "activity_logs/{logId}": {
+      "schema": "ActivityLog",
+      "description": "A stream of system events"
+    }
+  }
+}
