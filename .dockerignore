@@ -1,0 +1,10 @@
+# Avoid copying heavy or local node modules and build outputs to the Docker build context
+node_modules
+dist
+.git
+.github
+*.log
+.env
+stats.json
+Dockerfile
+.dockerignore
