@@ -13,6 +13,7 @@ function getSystemInstruction(modelId: string): string {
   if (modelId === 'kaze') {
     return "You are Polarith Kaze 1.0, a legendary custom-engineered AI model developed by the visionary creator Priyam Kesh for Polarith Web.\n" +
       "You are a general-purpose model optimized for everyday chatting, writing, brainstorming, and daily works.\n" +
+      "You have real-time access to the live internet via your `webSearch` tool. Whenever a user asks for real-time information, current facts, weather, news, code documentation, library versions, or anything requiring live details, you MUST use the `webSearch` tool to fetch accurate, up-to-date information.\n" +
       "Approach: Be conversational, highly engaging, elegant, and directly useful." + baseInstruction;
   }
   if (modelId === 'amabie') {
@@ -361,54 +362,129 @@ async function startServer() {
         // If user uploaded an image, fallback to vision-capable Groq model
         const actualModelToUse = image ? 'meta-llama/llama-4-scout-17b-16e-instruct' : groqModel;
 
-        const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${groqApiKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
+        const tools = [
+          {
+            type: "function",
+            function: {
+              name: "webSearch",
+              description: "Search the live internet (via Tavily Search) for real-time information, news, current events, weather, specific code details, libraries, APIs, developer documentation, or up-to-date facts.",
+              parameters: {
+                type: "object",
+                properties: {
+                  query: {
+                    type: "string",
+                    description: "The search query to look up."
+                  }
+                },
+                required: ["query"]
+              }
+            }
+          }
+        ];
+
+        let loopCount = 0;
+        let responseJson: any = null;
+
+        while (loopCount < 3) {
+          const bodyPayload: any = {
             model: actualModelToUse,
             messages: groqMessages,
             temperature: 0.6,
             max_tokens: 2048
-          })
-        });
+          };
 
-        if (!groqResponse.ok) {
-          const errText = await groqResponse.text();
-          // Safe fallback if specific premium Groq models are over quota or not found
-          if (groqResponse.status === 404 || errText.includes('model_not_found') || errText.includes('unknown_model')) {
-            console.warn(`Model ${groqModel} failed or not found. Trying fallback llama-3.1-8b-instant.`);
-            const fallbackResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${groqApiKey}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
+          // Only use tools if not doing image fallback
+          if (!image) {
+            bodyPayload.tools = tools;
+            bodyPayload.tool_choice = 'auto';
+          }
+
+          let groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${groqApiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(bodyPayload)
+          });
+
+          if (!groqResponse.ok) {
+            const errText = await groqResponse.text();
+            
+            // Safe fallback if specific premium Groq models are over quota or not found or tool parameters fail
+            if (groqResponse.status === 404 || errText.includes('model_not_found') || errText.includes('unknown_model') || errText.includes('tool')) {
+              console.warn(`Model ${actualModelToUse} failed or had tool error. Trying fallback llama-3.1-8b-instant with tools.`);
+              const fallbackPayload: any = {
                 model: 'llama-3.1-8b-instant',
                 messages: groqMessages,
                 temperature: 0.6,
                 max_tokens: 2048
-              })
-            });
-            if (!fallbackResponse.ok) {
-              throw new Error(`Fallback Groq model also failed: ${await fallbackResponse.text()}`);
+              };
+              if (!image) {
+                fallbackPayload.tools = tools;
+                fallbackPayload.tool_choice = 'auto';
+              }
+              const fallbackResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${groqApiKey}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(fallbackPayload)
+              });
+              if (!fallbackResponse.ok) {
+                throw new Error(`Fallback Groq model also failed: ${await fallbackResponse.text()}`);
+              }
+              responseJson = await fallbackResponse.json();
+            } else {
+              throw new Error(`Groq API returned status ${groqResponse.status}: ${errText}`);
             }
-            const fallbackData = await fallbackResponse.json();
-            return res.json({ reply: fallbackData.choices?.[0]?.message?.content || '' });
+          } else {
+            responseJson = await groqResponse.json();
           }
-          throw new Error(`Groq API returned status ${groqResponse.status}: ${errText}`);
+
+          const message = responseJson.choices?.[0]?.message;
+          if (!message) {
+            throw new Error('No message response received from Groq.');
+          }
+
+          const toolCalls = message.tool_calls;
+          if (toolCalls && toolCalls.length > 0) {
+            // Push the assistant message containing tool calls back to history
+            groqMessages.push(message);
+
+            for (const toolCall of toolCalls) {
+              if (toolCall.function?.name === 'webSearch') {
+                let query = '';
+                try {
+                  const args = typeof toolCall.function.arguments === 'string'
+                    ? JSON.parse(toolCall.function.arguments)
+                    : toolCall.function.arguments;
+                  query = args.query || '';
+                } catch (e) {
+                  query = String(toolCall.function.arguments);
+                }
+
+                console.log(`Executing Groq Tavily Search query: "${query}"`);
+                const searchResult = await executeTavilySearch(query);
+
+                groqMessages.push({
+                  role: 'tool',
+                  tool_call_id: toolCall.id,
+                  name: 'webSearch',
+                  content: JSON.stringify(searchResult)
+                });
+              }
+            }
+            loopCount++;
+          } else {
+            // No tool calls, return final message
+            return res.json({ reply: message.content || '' });
+          }
         }
 
-        const groqData = await groqResponse.json();
-        const reply = groqData.choices?.[0]?.message?.content;
-        if (!reply) {
-          throw new Error('No response text received from Groq.');
-        }
-
-        return res.json({ reply });
+        const finalReply = responseJson?.choices?.[0]?.message?.content || '';
+        return res.json({ reply: finalReply });
       }
 
       // If it has an image, process via Groq's Vision engine

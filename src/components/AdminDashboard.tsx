@@ -109,9 +109,9 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
 
   const getModelName = (id: string) => {
     const names: Record<string, string> = {
-      kodama: 'Polarith Kodama',
-      amabie: 'Polarith Amabie 1.0',
-      kaze: 'Polarith Kaze 1.0'
+      kodama: 'Polarith Kodama (400B)',
+      amabie: 'Polarith Amabie 1.0 (160B)',
+      kaze: 'Polarith Kaze 1.0 (8B)'
     };
     return names[id] || id;
   };

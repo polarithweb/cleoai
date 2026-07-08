@@ -7,7 +7,7 @@ export interface RateLimitConfig {
 export const MODEL_LIMITS: { [modelId: string]: RateLimitConfig } = {
   kaze: { limit: 100, windowMs: 1 * 60 * 60 * 1000, label: '1 hour' },
   amabie: { limit: 50, windowMs: 1 * 60 * 60 * 1000, label: '1 hour' },
-  kodama: { limit: 20, windowMs: 5 * 60 * 60 * 1000, label: '5 hours' }
+  kodama: { limit: 10, windowMs: 5 * 60 * 60 * 1000, label: '5 hours' }
 };
 
 function getStorageKey(modelId: string): string {

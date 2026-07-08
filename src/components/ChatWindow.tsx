@@ -222,7 +222,7 @@ export default function ChatWindow({
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-4 max-w-lg mx-auto py-10">
             <h3 className="text-3xl font-display font-extrabold text-slate-850 mb-1.5 tracking-tight">
-              Polarith <span className="text-sky-500 lowercase">cleo</span>
+              Polarith <span className="text-sky-500 lowercase">cleo.</span>
             </h3>
             <p className="text-sm font-sans text-slate-500 font-medium">
               AI LLMs by Polarith AI Lab
@@ -377,7 +377,7 @@ export default function ChatWindow({
                       ? 'Transcribing audio...'
                       : rateLimit.isBlocked 
                         ? 'Rate limit reached (50/50 messages)' 
-                        : 'Ask Polarith cleo to code, debug, or design...'
+                        : 'Ask Polarith cleo. to code, debug, or design...'
                   }
                   disabled={isLoading || rateLimit.isBlocked || isTranscribing}
                   className="w-full h-12 pl-6 pr-32 bg-white rounded-full text-sm font-medium text-slate-800 placeholder-slate-300 outline-none transition-all duration-300 shadow-md md:shadow-lg border border-slate-300/80 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:scale-[1.002]"

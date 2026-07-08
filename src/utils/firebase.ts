@@ -110,9 +110,9 @@ export async function trackMessageFirebase(clientId: string, modelId: string): P
       const statsDoc = await transaction.get(statsDocRef);
       
       const readableModelNames: Record<string, string> = {
-        kodama: 'Polarith Kodama',
-        amabie: 'Polarith Amabie 1.0',
-        kaze: 'Polarith Kaze 1.0'
+        kodama: 'Polarith Kodama (400B)',
+        amabie: 'Polarith Amabie 1.0 (160B)',
+        kaze: 'Polarith Kaze 1.0 (8B)'
       };
       const modelLabel = readableModelNames[modelId] || modelId;
       

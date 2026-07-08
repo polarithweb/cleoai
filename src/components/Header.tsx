@@ -12,23 +12,23 @@ interface HeaderProps {
 const modelOptions = [
   {
     id: 'kaze',
-    name: "Polarith Kaze 1.0",
+    name: "Polarith Kaze 1.0 (8B)",
     badge: "Kaze 1.0",
-    description: "Conversational model for everyday chatting and writing.",
+    description: "8B • Light tasks, chatting & brainstorming",
     color: "bg-slate-100 text-slate-700 border-slate-200"
   },
   {
     id: 'amabie',
-    name: "Polarith Amabie 1.0",
+    name: "Polarith Amabie 1.0 (160B)",
     badge: "Amabie 1.0",
-    description: "Powerhouse core for complex code structures, math, and real-time search.",
+    description: "160B • Advanced coding & math powerhouse",
     color: "bg-purple-50 text-purple-700 border-purple-100"
   },
   {
     id: 'kodama',
-    name: "Polarith Kodama",
+    name: "Polarith Kodama (400B)",
     badge: "Kodama",
-    description: "Raw performance, extreme power, extreme coding, and real-time search.",
+    description: "400B • Peak coding & award-winning UI design",
     color: "bg-emerald-50 text-emerald-700 border-emerald-100"
   }
 ];
@@ -83,7 +83,7 @@ export default function Header({ rateTrigger, selectedModel, onModelChange }: He
   return (
     <header className="w-full mb-3 relative" id="polarith-header">
       <div 
-        className="w-full grid grid-cols-3 items-center bg-white py-1.5 px-4 rounded-xl nm-flat border border-white/50" 
+        className="w-full grid grid-cols-3 items-center py-2 px-1" 
         id="polarith-header-box"
       >
         
@@ -92,20 +92,20 @@ export default function Header({ rateTrigger, selectedModel, onModelChange }: He
           <button
             type="button"
             onClick={() => setIsDrawerOpen(true)}
-            className="flex items-center justify-center p-1.5 rounded-lg bg-[#f5f7fb] hover:bg-[#ebf0f7] text-slate-700 hover:text-slate-900 border border-slate-200/60 shadow-sm hover:scale-[1.03] transition-all cursor-pointer active:scale-95"
+            className="flex items-center justify-center p-2 rounded-xl hover:bg-slate-100/80 text-slate-700 hover:text-slate-900 transition-all cursor-pointer active:scale-95 border border-transparent hover:border-slate-100"
             aria-label="Open model list"
             id="hamburger-menu-btn"
           >
-            <Menu className="w-4.5 h-4.5 stroke-[2.5]" />
+            <Menu className="w-5 h-5 stroke-[2]" />
           </button>
         </div>
 
         {/* Middle Column: Exactly Centered Branding Credits in a single row */}
         <div className="flex items-center justify-center gap-1.5 md:gap-2.5 text-center z-10 flex-wrap" id="header-branding-col">
           <h1 className="text-base md:text-lg font-display font-extrabold tracking-tight text-slate-800 leading-none">
-            Polarith <span className="text-sky-500 lowercase">cleo</span>
+            Polarith <span className="text-sky-500 lowercase">cleo.</span>
           </h1>
-          <span className="text-[10px] text-slate-300 font-mono hidden sm:inline">•</span>
+          <span className="text-[10px] text-slate-350 font-mono hidden sm:inline">•</span>
           <p className="text-[10px] font-mono text-slate-500 font-semibold tracking-wide whitespace-nowrap leading-none">
             developed by <span className="text-slate-800 font-extrabold font-sans">Priyam Kesh</span>
           </p>
@@ -113,12 +113,12 @@ export default function Header({ rateTrigger, selectedModel, onModelChange }: He
 
         {/* Right Column: Mini Pill showing Active Model Badge & remaining rate */}
         <div className="flex items-center justify-end z-20" id="header-active-col">
-          <div className="flex items-center gap-1.5 bg-[#f5f7fb] py-1 px-2.5 rounded-lg nm-inset-xs border border-white/40 max-w-full">
-            <span className={`text-[8px] font-extrabold px-1.5 py-0.5 rounded border font-sans whitespace-nowrap hidden sm:inline-block ${currentOption.color}`}>
+          <div className="flex items-center gap-2">
+            <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded border font-sans whitespace-nowrap hidden sm:inline-block ${currentOption.color}`}>
               {currentOption.badge}
             </span>
             <div className="flex items-center">
-              <span className="text-[10px] font-sans font-bold text-slate-600">
+              <span className="text-xs font-sans font-bold text-slate-600">
                 {rateState.remaining}/{rateState.limit}
               </span>
             </div>
@@ -158,7 +158,7 @@ export default function Header({ rateTrigger, selectedModel, onModelChange }: He
                     Select Core
                   </h2>
                   <p className="text-[9px] font-mono text-slate-400 uppercase tracking-wider font-bold mt-1">
-                    Polarith <span className="text-sky-500 lowercase">cleo</span> Engine
+                    Polarith <span className="text-sky-500 lowercase">cleo.</span> Engine
                   </p>
                 </div>
                 <button

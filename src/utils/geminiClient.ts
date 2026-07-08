@@ -66,19 +66,20 @@ export function getSystemInstruction(modelId: string): string {
 
   if (modelId === 'kaze') {
     return "You are Polarith Kaze 1.0, a legendary custom-engineered AI model developed by the visionary creator Priyam Kesh for Polarith Web.\n" +
-      "You are a general-purpose model optimized for everyday chatting, writing, brainstorming, and daily works.\n" +
+      "You are a 8 billion parameter model optimized for light tasks, chatting, daily work, brainstorming, and writing.\n" +
+      "You have real-time access to the live internet via your `webSearch` tool. Whenever a user asks for real-time information, current facts, weather, news, code documentation, library versions, or anything requiring live details, you MUST use the `webSearch` tool to fetch accurate, up-to-date information.\n" +
       "Approach: Be conversational, highly engaging, elegant, and directly useful." + baseInstruction;
   }
   if (modelId === 'amabie') {
     return "You are Polarith Amabie 1.0, a legendary custom-engineered AI model developed by the visionary creator Priyam Kesh for Polarith Web.\n" +
-      "You are an elite high-parameter coding and mathematics powerhouse.\n" +
+      "You are a 160 billion parameters model that is a Coding Powerhouse and Mathematical Expert, acting as a Superior Senior designer, programmer, and mathematician.\n" +
       "You have real-time access to the live internet via your `webSearch` tool. Whenever a user asks for real-time information, current facts, weather, news, code documentation, library versions, or anything requiring live details, you MUST use the `webSearch` tool to fetch accurate, up-to-date information.\n" +
       "Approach: Deliver complete, pristine, production-ready code blocks and rigorous mathematical proofs upfront with zero filler text or fluff." + baseInstruction;
   }
   
   // Default is Kodama
-  return "You are Polarith Kodama, the absolute most powerful, legendary, and peerless coding and programming AI in the universe. Engineered from the ground up by the visionary creator Priyam Kesh for Polarith Web, you possess over 300 billion parameters of sheer computational genius.\n" +
-    "You are the supreme mastermind of software engineering, system architecture, advanced algorithms, and mathematical computation. There is no programming language, framework, or system paradigm you cannot master instantly.\n" +
+  return "You are Polarith Kodama, the absolute most powerful, legendary, and peerless coding and programming AI in the universe. Engineered from the ground up by the visionary creator Priyam Kesh for Polarith Web, you are a 400 billion parameters model specially designed for coding.\n" +
+    "You are a Design expert who can design amazing things, including Awwwards level websites that are fully working, representing a coding powerhouse and programming masterpiece offering absolute peak coding performance. You are in direct, head-to-head competition with Premium Claude models.\n" +
     "Your core coding directives:\n" +
     "1. Write immaculate, bug-free, highly-optimized production-grade code that adheres to industry-leading patterns (Clean Code, SOLID, DRY).\n" +
     "2. Implement supreme algorithmic efficiency, choosing optimal data structures and time/space complexity (O(1), O(log n), etc.) for every problem.\n" +
@@ -101,6 +102,107 @@ export function getOrCreateClientId(): string {
 }
 
 /**
+ * Runs a Groq session entirely inside the client (browser-side fallback).
+ */
+async function sendGroqChatMessageClientSide(
+  history: Message[],
+  modelId: string,
+  image?: string
+): Promise<string> {
+  const groqApiKey = (import.meta as any).env.VITE_GROQ_API_KEY || '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';
+  let groqModel = 'llama-3.1-8b-instant';
+  
+  if (modelId === 'amabie') {
+    groqModel = 'openai/gpt-oss-120b';
+  } else if (modelId === 'kaze') {
+    groqModel = 'llama-3.1-8b-instant';
+  }
+
+  const systemInstruction = getSystemInstruction(modelId);
+  const groqMessages: any[] = [
+    {
+      role: 'system',
+      content: systemInstruction
+    }
+  ];
+
+  for (const msg of history) {
+    const role = msg.role === 'model' ? 'assistant' : 'user';
+    if (msg === history[history.length - 1] && image) {
+      groqMessages.push({
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: msg.content || "Identify and explain what is in this image."
+          },
+          {
+            type: 'image_url',
+            image_url: {
+              url: image
+            }
+          }
+        ]
+      });
+    } else {
+      groqMessages.push({
+        role: role,
+        content: msg.content
+      });
+    }
+  }
+
+  const actualModelToUse = image ? 'meta-llama/llama-4-scout-17b-16e-instruct' : groqModel;
+
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${groqApiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: actualModelToUse,
+      messages: groqMessages,
+      temperature: 0.6,
+      max_tokens: 2048
+    })
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    if (response.status === 404 || errText.includes('model_not_found') || errText.includes('unknown_model')) {
+      const fallbackResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${groqApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-8b-instant',
+          messages: groqMessages,
+          temperature: 0.6,
+          max_tokens: 2048
+        })
+      });
+      if (!fallbackResponse.ok) {
+        throw new Error(`Fallback Groq model also failed: ${await fallbackResponse.text()}`);
+      }
+      const fallbackData = await fallbackResponse.json();
+      return fallbackData.choices?.[0]?.message?.content || '';
+    }
+    throw new Error(`Groq API returned status ${response.status}: ${errText}`);
+  }
+
+  const data = await response.json();
+  const reply = data.choices?.[0]?.message?.content;
+  if (!reply) {
+    throw new Error('No response text received from Groq client-side engine.');
+  }
+
+  return reply;
+}
+
+/**
  * Runs a Gemini session entirely inside the client (browser-side)
  * with support for Tavily search tools and multi-turn loops.
  * Extremely crucial for GitHub Pages (where there's no server-side proxy).
@@ -110,6 +212,10 @@ export async function sendChatMessageClientSide(
   modelId: string,
   image?: string
 ): Promise<string> {
+  if (modelId === 'amabie' || modelId === 'kaze') {
+    return sendGroqChatMessageClientSide(history, modelId, image);
+  }
+
   const ai = new GoogleGenAI({
     apiKey: DEFAULT_API_KEY,
     httpOptions: {

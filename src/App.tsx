@@ -145,7 +145,7 @@ export default function App() {
       
       let assistantContent = "I ran into an issue while generating a response. Please check your network connection.";
       if (errorMessage.includes('POLARITH_COOKIE_BLOCK')) {
-        assistantContent = "### Browser Cookie Restriction Detected\n\nPolarith cleo is currently unable to communicate with the backend due to your browser's third-party cookie restrictions (iframe sandboxing).\n\n**To resolve this and unlock Polarith cleo:**\n1. Click the **Open in New Tab** button in the very top-right corner of the preview panel.\n2. Once the app opens in a new tab, cookies will be initialized, and you can chat with Polarith cleo both there and right here in this preview window!";
+        assistantContent = "### Browser Cookie Restriction Detected\n\nPolarith cleo. is currently unable to communicate with the backend due to your browser's third-party cookie restrictions (iframe sandboxing).\n\n**To resolve this and unlock Polarith cleo.:**\n1. Click the **Open in New Tab** button in the very top-right corner of the preview panel.\n2. Once the app opens in a new tab, cookies will be initialized, and you can chat with Polarith cleo. both there and right here in this preview window!";
       }
 
       const assistantErrorMessage: Message = {
@@ -178,7 +178,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-[100dvh] w-screen bg-[#f0f3f8] overflow-hidden p-4 md:p-6 lg:p-8 flex flex-col items-center justify-center" id="polarith-app-root">
+    <div className="h-[100dvh] w-screen bg-white overflow-hidden p-4 md:p-6 lg:p-8 flex flex-col items-center justify-center" id="polarith-app-root">
       <div className="w-full max-w-5xl h-full flex flex-col">
         
         {/* Sleek top header featuring title, credits and dropdown */}
